@@ -23,7 +23,7 @@ class LoginViewController: UIViewController {
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
-
+    
     private let emailField: UITextField = {
         let emailField = UITextField()
         emailField.autocapitalizationType = .none
@@ -70,7 +70,7 @@ class LoginViewController: UIViewController {
         return button
     }()
     
-     // MARK: viewDidLoad
+    // MARK: viewDidLoad
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -78,9 +78,9 @@ class LoginViewController: UIViewController {
         view.backgroundColor = .white
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Register",
-                                                           style: .done,
-                                                           target: self,
-                                                           action: #selector(didTapRegister))
+                                                            style: .done,
+                                                            target: self,
+                                                            action: #selector(didTapRegister))
         
         loginButton.addTarget(self,
                               action: #selector(loginButtonTapped),
@@ -107,19 +107,19 @@ class LoginViewController: UIViewController {
         let size = scrollView.width / 3
         
         imageView.frame = CGRect(x: (scrollView.width - size) / 2 ,
-                                  y: 20,
-                                  width: size,
+                                 y: 20,
+                                 width: size,
                                  height: size)
         
         emailField.frame = CGRect(x: 30 ,
                                   y: imageView.bottom + 10,
                                   width: scrollView.width - 60,
-                                 height: 52)
+                                  height: 52)
         
         passwordField.frame = CGRect(x: 30 ,
-                                  y: emailField.bottom + 10,
-                                  width: scrollView.width - 60,
-                                 height: 52)
+                                     y: emailField.bottom + 10,
+                                     width: scrollView.width - 60,
+                                     height: 52)
         
         loginButton.frame = CGRect(x: 30 ,
                                    y: passwordField.bottom + 10,
@@ -164,14 +164,12 @@ class LoginViewController: UIViewController {
                                       style: .cancel, handler: nil))
         present(alert, animated: true)
     }
-
+    
     @objc private func didTapRegister() {
         let vc = RegisterViewController()
         vc.title = "Create Account"
         navigationController?.pushViewController(vc, animated: true)
     }
-    
-
 }
 
 extension LoginViewController: UITextFieldDelegate {
@@ -197,21 +195,49 @@ extension LoginViewController: LoginButtonDelegate {
             return
         }
         
-        let credential = FacebookAuthProvider.credential(withAccessToken: token)
-        FirebaseAuth.Auth.auth().signIn(with: credential) { [weak self] (authResult, error) in
-            guard let strongSelf = self else { return }
-            guard  authResult != nil, error == nil else {
-                if let error = error {
-                    print("Facebook credential login failed, MFA may be needed - \(error)")
-                }
+        let faceebookRequst = FBSDKLoginKit.GraphRequest(graphPath: "me",
+                                                         parameters: ["fields": "email, name"],
+                                                         tokenString: token,
+                                                         version: nil,
+                                                         httpMethod: .get)
+        faceebookRequst.start { (_, result, error) in
+            guard let result = result as? [String: Any],
+                  error == nil else {
+                print("Failed to make facebook graph request")
                 return
             }
-            print("Successfully logged user in")
-            strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+            guard let userName = result["name"] as? String,
+                  let email = result["email"] as? String else {
+                print("Faield to get email and name from  result")
+                return
+            }
+            let nameComponents = userName.components(separatedBy: " ")
+            guard nameComponents.count == 2 else {
+                return
+            }
+            let firstName = nameComponents[0]
+            let lastName = nameComponents[1]
+            
+            DatabaseManager.shared.userExists(with: email) { exist in
+                if !exist {
+                    DatabaseManager.shared.insertUser(with: ChatAppUser(firstName: firstName,
+                                                                        lastName: lastName,
+                                                                        emailAddress: email))
+                }
+            }
+            
+            let credential = FacebookAuthProvider.credential(withAccessToken: token)
+            FirebaseAuth.Auth.auth().signIn(with: credential) { [weak self] (authResult, error) in
+                guard let strongSelf = self else { return }
+                guard  authResult != nil, error == nil else {
+                    if let error = error {
+                        print("Facebook credential login failed, MFA may be needed - \(error)")
+                    }
+                    return
+                }
+                print("Successfully logged user in")
+                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+            }
         }
     }
-    
-    
-    
-    
 }
