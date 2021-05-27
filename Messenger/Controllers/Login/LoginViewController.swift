@@ -155,12 +155,8 @@ class LoginViewController: UIViewController {
                                         y: facebookLoginButton.bottom + 10,
                                         width: scrollView.width - 60,
                                         height: 52)
-        
-        
-        
+
     }
-    
-    
     @objc private func loginButtonTapped() {
         
         emailField.resignFirstResponder()
@@ -258,9 +254,14 @@ extension LoginViewController: LoginButtonDelegate {
             
             DatabaseManager.shared.userExists(with: email) { exist in
                 if !exist {
-                    DatabaseManager.shared.insertUser(with: ChatAppUser(firstName: firstName,
-                                                                        lastName: lastName,
-                                                                        emailAddress: email))
+                    let chatUser = ChatAppUser(firstName: firstName,
+                                               lastName: lastName,
+                                               emailAddress: email)
+                    DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
+                        if success {
+                            // upload image
+                        }
+                    })
                 }
             }
             
