@@ -18,7 +18,6 @@ class RegisterViewController: UIViewController {
         scrollView.clipsToBounds = true
         return scrollView
     }()
-    
     private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "person.circle")
@@ -29,7 +28,6 @@ class RegisterViewController: UIViewController {
         imageView.layer.borderColor = UIColor.lightGray.cgColor
         return imageView
     }()
-    
     private let firstNameField: UITextField = {
         let field = UITextField()
         field.autocapitalizationType = .none
@@ -58,7 +56,6 @@ class RegisterViewController: UIViewController {
         field.backgroundColor = .white
         return field
     }()
-    
     private let emailField: UITextField = {
         let field = UITextField()
         field.autocapitalizationType = .none
@@ -88,8 +85,6 @@ class RegisterViewController: UIViewController {
         passwordField.isSecureTextEntry = true
         return passwordField
     }()
-    
-    
     private let registerButton: UIButton = {
         let button = UIButton()
         button.setTitle("Register", for: .normal)
@@ -106,12 +101,6 @@ class RegisterViewController: UIViewController {
         super.viewDidLoad()
         title = "Log in"
         view.backgroundColor = .white
-        
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Register",
-//                                                            style: .done,
-//                                                            target: self,
-//                                                            action: #selector(didTapRegister))
-        
         registerButton.addTarget(self,
                                  action: #selector(registerButtonTapped),
                                  for: .touchUpInside)
@@ -149,19 +138,15 @@ class RegisterViewController: UIViewController {
                                  y: 20,
                                  width: size,
                                  height: size)
-        
         imageView.layer.cornerRadius = imageView.width / 2
-        
         firstNameField.frame = CGRect(x: 30 ,
                                       y: imageView.bottom + 10,
                                       width: scrollView.width - 60,
                                       height: 52)
-        
         lastNameField.frame = CGRect(x: 30 ,
                                      y: firstNameField.bottom + 10,
                                      width: scrollView.width - 60,
                                      height: 52)
-        
         emailField.frame = CGRect(x: 30 ,
                                   y: lastNameField.bottom + 10,
                                   width: scrollView.width - 60,
@@ -171,13 +156,11 @@ class RegisterViewController: UIViewController {
                                      y: emailField.bottom + 10,
                                      width: scrollView.width - 60,
                                      height: 52)
-        
         registerButton.frame = CGRect(x: 30 ,
                                       y: passwordField.bottom + 10,
                                       width: scrollView.width - 60,
                                       height: 52)
     }
-    
     
     @objc private func registerButtonTapped() {
         emailField.resignFirstResponder()
@@ -260,8 +243,6 @@ class RegisterViewController: UIViewController {
         vc.title = "Create Account"
         navigationController?.pushViewController(vc, animated: true)
     }
-    
-    
 }
 
 extension RegisterViewController: UITextFieldDelegate {
