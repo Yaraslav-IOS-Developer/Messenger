@@ -230,7 +230,7 @@ extension LoginViewController: LoginButtonDelegate {
         }
         
         let faceebookRequst = FBSDKLoginKit.GraphRequest(graphPath: "me",
-                                                         parameters: ["fields": "email, name"],
+                                                         parameters: ["fields": "email, first_name, last_name, picture.type(large)"],
                                                          tokenString: token,
                                                          version: nil,
                                                          httpMethod: .get)
@@ -240,17 +240,17 @@ extension LoginViewController: LoginButtonDelegate {
                 print("Failed to make facebook graph request")
                 return
             }
-            guard let userName = result["name"] as? String,
-                  let email = result["email"] as? String else {
+            print(result)
+            
+            guard let firstName = result["first_name"] as? String,
+                  let lastName = result["lalst_name"] as? String,
+                  let email = result["email"] as? String,
+                  let picture = result["picture"] as? [String: Any?],
+                  let data = picture["data"] as? [String: Any],
+                  let pictureUrl = data["url"] as? String else {
                 print("Faield to get email and name from  result")
                 return
             }
-            let nameComponents = userName.components(separatedBy: " ")
-            guard nameComponents.count == 2 else {
-                return
-            }
-            let firstName = nameComponents[0]
-            let lastName = nameComponents[1]
             
             DatabaseManager.shared.userExists(with: email) { exist in
                 if !exist {
@@ -259,7 +259,27 @@ extension LoginViewController: LoginButtonDelegate {
                                                emailAddress: email)
                     DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
                         if success {
-                            // upload image
+                            
+                            guard let url = URL(string: pictureUrl) else { return }
+                            print("Downloading data from facebook image")
+                            
+                            URLSession.shared.dataTask(with: url) { (data, _ , _) in
+                                guard let data = data else {
+                                    print("Failed toget data from facebook")
+                                    return }
+                                print("got data from FB, uploading...")
+                                
+                                // upload image
+                                StorageManager.shared.uploadProfilePicture(with: data, fileName: firstName) { (result) in
+                                    switch result {
+                                    case .success(let dowloadUrl):
+                                        UserDefaults.standard.set(dowloadUrl, forKey: "profile_picture_url")
+                                        print(dowloadUrl)
+                                    case .failure(let error):
+                                    print("Storage maanger error: \(error)")
+                                    }
+                                }
+                            }.resume()
                         }
                     })
                 }

@@ -28,16 +28,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
         
         GIDSignIn.sharedInstance()?.clientID = FirebaseApp.app()?.options.clientID
         GIDSignIn.sharedInstance()?.delegate = self
-
+        
         return true
     }
-          
+    
     func application(
         _ app: UIApplication,
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-
+        
         ApplicationDelegate.shared.application(
             app,
             open: url,
@@ -46,7 +46,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
         )
         
         return ((GIDSignIn.sharedInstance()?.handle(url)) != nil)
-
+        
     }
     
     func sign(_ signIn: GIDSignIn!, didSignInFor user: GIDGoogleUser!, withError error: Error!) {
@@ -72,7 +72,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
                                             emailAddress: email)
                 DatabaseManager.shared.insertUser(with: chatUser, completion: { success  in
                     if success {
-                        
+                        if user.profile.hasImage {
+                            guard let url = user.profile.imageURL(withDimension: 200) else { return }
+                            
+                            
+                            URLSession.shared.dataTask(with: url) { (data, _, _) in
+                                guard let data = data else { return }
+                                
+                                let fileName = chatUser.profilePictureFileName
+                                StorageManager.shared.uploadProfilePicture(with: data, fileName: firstName) { (result) in
+                                    switch result {
+                                    case .success(let dowloadUrl):
+                                        UserDefaults.standard.set(dowloadUrl, forKey: "profile_picture_url")
+                                        print(dowloadUrl)
+                                    case .failure(let error):
+                                        print("Storage maanger error: \(error)")
+                                    }
+                                }
+                            }.resume()
+                        }
                     }
                 })
             }
@@ -100,7 +118,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
     }
     
     
-
-}
     
+}
+
 
